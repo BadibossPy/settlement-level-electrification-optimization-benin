@@ -142,14 +142,24 @@ SHS is excluded if the settlement has productive loads (commercial, agricultural
 optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
 ```
 
-## Pipeline (minimal, reproducible)
+## Pipeline (minimal, with workflow graph)
 
-1) **Input + validation**: `settlements.geojson` (geometry, population; optional wealth, buildings, distances, facilities). Schema checks nulls, negatives, and fills missing distances with safe defaults.
-2) **Categorize settlements**: urban flag (population/buildings), households (urban/rural sizes), MTF tier from RWI with nightlight uplift.
-3) **Demand model**: residential by tier and uptake; commercial via gravity + SME density; agricultural (mills, irrigation, dryers); public (health, schools); growth to 2040; peak via tier load factors.
-4) **Cost model**: grid (MV/LV/transformer/connection, losses, energy price), mini-grid (PV/battery/inverter with replacements), SHS (tier caps, exclusion when productive loads exist).
-5) **Optimization**: compute LCOE for each technology; select `argmin`; assign CAPEX as investment.
-6) **Outputs**: `results.geojson` with demand, peak, LCOE per tech, optimal tech, and investment. Notebook and CLI reproduce the same figures and KPIs cited above.
+```mermaid
+flowchart LR
+    A[Input\nsettlements.geojson] --> B[Validate\nrequired fields, defaults]
+    B --> C[Categorize\nurban/rural, households, MTF tier (+nightlight)]
+    C --> D[Demand\nresidential, commercial, agri, public\n+ growth, peak]
+    D --> E[Cost\nGrid MV/LV/tx + losses\nMini-grid PV/battery/inverter\nSHS caps + exclusions]
+    E --> F[Optimize\nargmin LCOE]
+    F --> G[Output\nresults.geojson\ntech, LCOE, investment, demand, peak]
+```
+
+1) Input + validation.  
+2) Categorize settlements.  
+3) Demand: all sectors, growth, peak.  
+4) Cost: grid / mini-grid / SHS as implemented.  
+5) Optimize: choose lowest LCOE, keep CAPEX.  
+6) Output: GeoJSON + notebook/CLI reproducibility.
 
 ## Usage
 
