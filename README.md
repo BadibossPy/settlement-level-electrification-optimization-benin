@@ -2,6 +2,8 @@
 
 Least-cost electrification analysis for Benin settlements. The implementation follows the assignment requirements: estimate demand over a planning horizon, compute LCOE for multiple technologies, and select the least-cost option per settlement.
 
+*Updated: All equations now displayed as GitHub-compatible code blocks.*
+
 ## Architecture
 
 ```mermaid
