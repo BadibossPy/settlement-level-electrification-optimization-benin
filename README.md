@@ -60,149 +60,142 @@ All constants are in `benin_least_cost/parameters.py`.
 
 **Urban flag**
 
-\[
-\text{is\_urban} = (\text{population} > 5000)\ \lor\ (\text{num\_buildings} > 500)
-\]
+```python
+is_urban = (population > 5000) | (num_buildings > 500)
+```
 
 **Households**
 
-\[
-\text{households}=\left\lceil\frac{\text{population}}{s}\right\rceil
-\]
+```python
+households = ceil(population / hh_size)
+```
 
-with \(s=4.3\) (urban) and \(s=5.2\) (rural).
+where hh_size = 4.3 (urban) or 5.2 (rural).
 
 **Tiering (RWI)**
 
-\[
-\text{tier}=\begin{cases}
-1 & \text{if } \text{RWI} < -0.3\\
-2 & \text{if } -0.3 \le \text{RWI} < 0.4\\
-3 & \text{otherwise}
-\end{cases}
-\]
+```python
+tier = 1 if RWI < -0.3 else 2 if RWI < 0.4 else 3
+```
 
 If `has_nightlight > 0`, tier is raised to at least 2.
 
 **Residential demand**
 
-\[
-E_{res}=\text{households}\cdot E_{tier}(\text{tier})\cdot uptake
-\]
+```python
+E_res = households * tier_kwh[tier] * uptake
+```
 
-where \(uptake=0.95\) for urban and \(0.85\) for rural.
+where uptake = 0.95 (urban) or 0.85 (rural).
 
 **Commercial demand**
 
-\[
-g = \text{clip}\left(1+\frac{20}{d_{hub}+1},\ 1,\ 2.5\right)
-\]
+```python
+gravity = min(max(1 + 20/(dist_hub + 1), 1), 2.5)
+n_SME = floor((N / k) * gravity)
+```
 
-\[
-n_{SME}=\left\lfloor \frac{N}{k}\cdot g \right\rfloor
-\]
+with k = 50 (urban) or 100 (rural), N = num_buildings if available else households.
 
-with \(k=50\) (urban) or \(k=100\) (rural), and \(N\) = num_buildings if available, else households.
-
-\[
-E_{comm}=n_{SME}\cdot 600
-\]
+```python
+E_comm = n_SME * 600
+```
 
 **Agricultural demand**
 
-- Mills (rural, population > 500): \(E_{mill}=\max(1,\lfloor pop/1500\rfloor)\cdot 4500\)
-- Irrigation (distance to water < 3 km, population > 300): \(E_{irr}=\max(1,\lfloor pop/800\rfloor)\cdot 3500\)
-- Dryers (latitude > 8°, rural, population > 400): \(E_{dryer}=\max(1,\lfloor pop/2000\rfloor)\cdot 6000\)
+- Mills (rural, population > 500): `E_mill = max(1, floor(pop/1500)) * 4500`
+- Irrigation (dist_water < 3km, population > 300): `E_irr = max(1, floor(pop/800)) * 3500`
+- Dryers (latitude > 8°, rural, population > 400): `E_dryer = max(1, floor(pop/2000)) * 6000`
 
 **Public demand**
 
-\[
-E_{pub}=n_{health}\cdot 4000 + n_{edu}\cdot 1500
-\]
+```python
+E_pub = n_health * 4000 + n_edu * 1500
+```
 
 **Growth**
 
-\[
-G=\big((1+g_{pop})(1+g_{wealth})\big)^{H}
-\]
+```python
+G = (1 + g_pop) * (1 + g_wealth) ** H
+```
 
-with \(g_{pop}=0.027\), \(g_{wealth}=0.015\), \(H=15\).
+with g_pop = 0.027, g_wealth = 0.015, H = 15.
 
-\[
-E_{proj}=(E_{res}+E_{comm}+E_{agri}+E_{pub})\cdot G
-\]
+```python
+E_proj = (E_res + E_comm + E_agri + E_pub) * G
+```
 
 **Peak load**
 
-\[
-P_{peak}=\frac{E_{proj}}{8760\cdot LF(\text{tier})}
-\]
+```python
+P_peak = E_proj / (8760 * LF[tier])
+```
 
 ### LCOE model
 
 **Capital Recovery Factor**
 
-\[
-CRF(r,n)=\frac{r(1+r)^n}{(1+r)^n-1}
-\]
+```python
+CRF = lambda r, n: r * (1+r)**n / ((1+r)**n - 1)
+```
 
-Discount rate \(r=0.08\) by default.
+Discount rate r = 0.08 by default.
 
 **Grid**
 
-\[
-d_{grid}=\min(d_{sub},\ d_{trans} + C_{sub}/C_{MV})
-\]
+```python
+d_grid = min(d_sub, d_trans + C_sub/C_MV)
+```
 
-Terrain factor is 1.3 when `dist_main_road_km > 10`, else 1.0.
+Terrain factor = 1.3 when dist_main_road_km > 10, else 1.0.
 
-\[
-Ann_{grid}=CAPEX_{grid}\cdot(CRF(r,40)+0.02)+\left(\frac{E_{proj}}{1-0.18}\right)\cdot 0.10
-\]
+```python
+Ann_grid = CAPEX_grid * (CRF(r, 40) + 0.02) + (E_proj / 0.82) * 0.10
+```
 
-\[
-LCOE_{grid}=\frac{Ann_{grid}}{E_{proj}}
-\]
+```python
+LCOE_grid = Ann_grid / E_proj
+```
 
 **Mini-Grid (PV + battery)**
 
-\[
-PV_{kW}=\left(\frac{E_{proj}/365}{CF\cdot 24\cdot \eta}\right)\cdot 1.2
-\]
+```python
+PV_kW = (E_proj / 365) / (CF * 24 * eta) * 1.2
+```
 
-with \(CF=0.18\), \(\eta=0.85\).
+with CF = 0.18, eta = 0.85.
 
-\[
-Batt_{kWh}=\frac{E_{proj}/365}{DoD}
-\]
+```python
+Batt_kWh = (E_proj / 365) / DoD
+```
 
-with \(DoD=0.8\).
+with DoD = 0.8.
 
-\[
-NPV_{batt}=\sum_{y\in\{7,14\}} \frac{Batt_{kWh}\cdot 300}{(1+r)^y}
-\]
+```python
+NPV_batt = sum(Batt_kWh * 300 / (1+r)**y for y in [7, 14])
+```
 
-\[
-LCOE_{mg}=\frac{CAPEX_{mg}\cdot(CRF(r,20)+0.03)}{E_{proj}}
-\]
+```python
+LCOE_mg = CAPEX_mg * (CRF(r, 20) + 0.03) / E_proj
+```
 
 **SHS**
 
-\[
-E_{del}=\min\left(\frac{E_{proj}}{households},\ cap(\text{tier})\right)\cdot households
-\]
+```python
+E_del = min(E_proj / households, cap[tier]) * households
+```
 
-\[
-LCOE_{shs}=\frac{CAPEX_{shs}\cdot(CRF(r,5)+0.05)}{E_{del}}
-\]
+```python
+LCOE_shs = CAPEX_shs * (CRF(r, 5) + 0.05) / E_del
+```
 
-Penalty: if `tier > 3` or any of `dem_comm`, `dem_agri`, `dem_pub` is positive, \(LCOE_{shs}=999.9\).
+Penalty: if tier > 3 or any productive demand > 0, LCOE_shs = 999.9.
 
 **Selection**
 
-\[
-\text{optimal\_tech}=\arg\min(LCOE_{grid},LCOE_{mg},LCOE_{shs})
-\]
+```python
+optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
+```
 
 ## Results (example run on included `data/settlements.geojson`)
 
