@@ -61,16 +61,16 @@ All constants are in `benin_least_cost/parameters.py`.
 **Urban flag**
 
 \[
-is\_urban = (\text{population} > 5000)\ \lor\ (\text{num\_buildings} > 500)
+\text{is\_urban} = (\text{population} > 5000)\ \lor\ (\text{num\_buildings} > 500)
 \]
 
 **Households**
 
 \[
-\text{households}=\left\lceil\frac{\text{population}}{hh\_size}\right\rceil
+\text{households}=\left\lceil\frac{\text{population}}{s}\right\rceil
 \]
 
-with \(hh\_size=4.3\) (urban) and \(5.2\) (rural).
+with \(s=4.3\) (urban) and \(s=5.2\) (rural).
 
 **Tiering (RWI)**
 
@@ -95,17 +95,17 @@ where \(uptake=0.95\) for urban and \(0.85\) for rural.
 **Commercial demand**
 
 \[
-gravity = \text{clip}\left(1+\frac{20}{dist\_hub+1},\ 1,\ 2.5\right)
+g = \text{clip}\left(1+\frac{20}{d_{hub}+1},\ 1,\ 2.5\right)
 \]
 
 \[
-SME=\left\lfloor \left(\frac{N}{\text{buildings\_per\_SME}}\right)\cdot gravity \right\rfloor
+n_{SME}=\left\lfloor \frac{N}{k}\cdot g \right\rfloor
 \]
 
-with `buildings_per_SME = 50` (urban) or `100` (rural), and \(N=\text{num\_buildings}\) if available else \(N=\text{households}\).
+with \(k=50\) (urban) or \(k=100\) (rural), and \(N\) = num_buildings if available, else households.
 
 \[
-E_{comm}=SME\cdot 600
+E_{comm}=n_{SME}\cdot 600
 \]
 
 **Agricultural demand**
@@ -151,7 +151,7 @@ Discount rate \(r=0.08\) by default.
 **Grid**
 
 \[
-dist\_{grid}=\min(dist\_{sub},\ dist\_{trans} + \frac{C_{sub}}{C_{MV/km}})
+d_{grid}=\min(d_{sub},\ d_{trans} + C_{sub}/C_{MV})
 \]
 
 Terrain factor is 1.3 when `dist_main_road_km > 10`, else 1.0.
