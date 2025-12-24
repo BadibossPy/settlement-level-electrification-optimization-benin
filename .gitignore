@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+benin_results.geojson
+.venv/
+venv/
+ENV/
+.env
+.vscode/
+.idea/
