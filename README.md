@@ -70,9 +70,24 @@ flowchart TB
 
 ## Usage
 
+**CLI:**
 ```bash
 pip install -r requirements.txt
 python run_model.py --input data/settlements.geojson --output results.geojson
+```
+
+**Python API:**
+```python
+import geopandas as gpd
+from benin_least_cost.parameters import ProjectConfig
+from benin_least_cost.demand import run_demand_model
+from benin_least_cost.lcoe import run_lcoe_model
+
+gdf = gpd.read_file("data/settlements.geojson")
+config = ProjectConfig()
+gdf = run_demand_model(gdf, config)
+gdf = run_lcoe_model(gdf, config)
+print(gdf["optimal_tech"].value_counts())
 ```
 
 ## Output Fields
@@ -94,16 +109,18 @@ All parameters in `benin_least_cost/parameters.py`:
 ## Structure
 
 ```
-├── benin_least_cost/
-│   ├── demand.py      # Demand estimation
-│   ├── lcoe.py        # LCOE and selection
-│   ├── parameters.py  # All parameters
-│   └── schema.py      # Data validation
+├── benin_least_cost/      # Core Python package
+│   ├── demand.py          # Demand estimation
+│   ├── lcoe.py            # LCOE and selection
+│   ├── parameters.py      # All parameters
+│   └── schema.py          # Data validation
+├── run_model.py           # CLI entry point
+├── tests/
+│   └── test_logic.py      # Unit tests
 ├── data/
 │   └── settlements.geojson
-├── notebooks/
+├── notebooks/             # Optional visualization
 │   └── electrification_analysis.ipynb
-├── run_model.py
 └── requirements.txt
 ```
 
@@ -111,6 +128,5 @@ All parameters in `benin_least_cost/parameters.py`:
 
 ```bash
 pytest tests/
-jupyter nbconvert --execute notebooks/electrification_analysis.ipynb
 ```
 
