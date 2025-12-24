@@ -1,16 +1,6 @@
-# Benin Least-Cost Electrification Model (2025–2040)
+## Settlement-level least-cost electrification (Benin, 2025–2040)
 
-Settlement-level electrification planning for Benin. Compares Grid Extension, Mini-Grid, and Solar Home Systems (SHS) for 17,205 settlements.
-
-## Results Summary
-
-| Metric | Value |
-|--------|-------|
-| Settlements analyzed | 17,205 |
-| Total investment | USD 2.4 Billion |
-| Grid extension | 9% of settlements |
-| Mini-Grid | 63% of settlements |
-| SHS | 28% of settlements |
+Least-cost electrification analysis for Benin settlements. The implementation follows the assignment requirements: estimate demand over a planning horizon, compute LCOE for multiple technologies, and select the least-cost option per settlement.
 
 ## Architecture
 
@@ -21,226 +11,211 @@ flowchart TD
         B[infrastructure.geojson]
     end
 
-    subgraph DEMAND[Demand Estimation]
-        C[Assign MTF Tier by RWI]
-        D[Calculate residential load]
-        E[Add productive loads]
-        F[Project to 2040]
+    subgraph DEMAND[Demand]
+        C[Urban flag + households]
+        D[MTF tier from RWI (+ nightlights)]
+        E[Residential + commercial + agri + public]
+        F[Growth + peak]
     end
 
-    subgraph LCOE[Cost Calculation]
-        G[Grid LCOE]
-        H[Mini-Grid LCOE]
-        I[SHS LCOE]
+    subgraph LCOE[LCOE]
+        G[Grid]
+        H[Mini-Grid]
+        I[SHS (+ penalty)]
     end
 
     subgraph OUTPUT[Output]
-        J[Select minimum LCOE]
+        J[Min LCOE]
         K[results.geojson]
     end
 
-    A --> C
+    A --> C --> D --> E --> F
     B --> G
-    C --> D --> E --> F
-    F --> G
-    F --> H
-    F --> I
-    G --> J
-    H --> J
-    I --> J
+    F --> G --> J
+    F --> H --> J
+    F --> I --> J
     J --> K
 ```
 
-## Strategy
+## Data
 
-The model answers: **What is the cheapest way to electrify each settlement?**
+### Required fields
 
-For each of 17,205 settlements:
-1. Estimate electricity demand based on population, wealth, and productive activities
-2. Calculate the cost per kWh (LCOE) for three technology options
-3. Select the cheapest option
+- `geometry`
+- `population`
 
-### Why these results?
+### Optional fields used (if present)
 
-**Grid (9%)**: Only cost-effective for settlements close to existing infrastructure. MV line costs ($14,000/km) make grid extension expensive beyond ~5km from substations.
+- `num_buildings`, `mean_rwi`, `has_nightlight`
+- `dist_to_substations`, `distance_to_existing_transmission_lines`, `dist_main_road_km`
+- `dist_lake_river_km`, `dist_nearest_hub_km`
+- `num_health_facilities`, `num_education_facilities`
+- `lat` (used for the `> 8°N` dryer rule)
 
-**Mini-Grid (63%)**: Optimal for most rural settlements. Solar+battery systems serve populations of 200-5000 people with productive loads (mills, irrigation, health centers) more cheaply than extending the grid.
+## Methods (as implemented)
 
-**SHS (28%)**: Best for small, dispersed settlements with low demand. A $80-250 system per household beats building any shared infrastructure when demand is under 150 kWh/year per household.
+All constants are in `benin_least_cost/parameters.py`.
 
-## Assumptions
+### Demand model
 
-### Demand Model
+**Urban flag**
 
-**Household consumption** is assigned using the Multi-Tier Framework (MTF):
+\[
+is\_urban = (\text{population} > 5000)\ \lor\ (\text{num\_buildings} > 500)
+\]
 
-| Wealth Level (RWI) | Tier | Annual Demand |
-|-------------------|------|---------------|
-| Poor (< -0.3) | 1 | 35 kWh/hh |
-| Middle (-0.3 to 0.4) | 2 | 220 kWh/hh |
-| Higher (> 0.4) | 3 | 850 kWh/hh |
+**Households**
 
-**Productive loads** are added based on settlement characteristics:
+\[
+\text{households}=\left\lceil\frac{\text{population}}{hh\_size}\right\rceil
+\]
 
-| Load Type | Demand | When Applied |
-|-----------|--------|--------------|
-| Health center | 4,000 kWh/yr | Per facility present |
-| School | 1,500 kWh/yr | Per facility present |
-| Grain mill | 4,500 kWh/yr | Rural settlements > 500 people |
-| Irrigation pump | 3,500 kWh/yr | Settlements < 3km from water |
-| Crop dryer | 6,000 kWh/yr | Northern region (> 8°N) for cashew/shea |
+with \(hh\_size=4.3\) (urban) and \(5.2\) (rural).
 
-**Growth projection**: Demand grows at 2.7% (population) + 1.5% (wealth) annually for 15 years.
+**Tiering (RWI)**
 
-### Cost Model
+\[
+\text{tier}=\begin{cases}
+1 & \text{if } \text{RWI} < -0.3\\
+2 & \text{if } -0.3 \le \text{RWI} < 0.4\\
+3 & \text{otherwise}
+\end{cases}
+\]
 
-**Grid Extension**:
-- MV line: $14,000/km
-- LV line: $5,500/km  
-- Transformer: $8,000 per 45kVA unit
-- Connection: $150/household
-- Losses: 18%
-- Lifetime: 40 years
+If `has_nightlight > 0`, tier is raised to at least 2.
 
-**Mini-Grid (Solar + Battery)**:
-- PV panels: $700/kWp
-- Battery: $300/kWh (replaced every 7 years)
-- Inverter: $180/kW
-- Capacity factor: 18%
-- Lifetime: 20 years
+**Residential demand**
 
-**Solar Home System**:
-- Tier 1: $80 (35 kWh/yr capacity)
-- Tier 2: $250 (150 kWh/yr capacity)
-- Tier 3: $600 (350 kWh/yr capacity)
-- Lifetime: 5 years
+\[
+E_{res}=\text{households}\cdot E_{tier}(\text{tier})\cdot uptake
+\]
 
-**Discount rate**: 8% for all technologies
+where \(uptake=0.95\) for urban and \(0.85\) for rural.
 
-### Key Constraints
+**Commercial demand**
 
-1. **SHS cannot serve productive loads**. Settlements with health centers, schools, mills, or irrigation automatically exclude SHS.
+\[
+gravity = \text{clip}\left(1+\frac{20}{dist\_hub+1},\ 1,\ 2.5\right)
+\]
 
-2. **Grid distance penalty**. Settlements >10km from paved roads get 30% higher grid construction costs.
+\[
+SME=\left\lfloor \left(\frac{N}{\text{buildings\_per\_SME}}\right)\cdot gravity \right\rfloor
+\]
 
-3. **Northern agricultural loads**. Settlements above 8°N latitude get crop dryer loads (cashew and shea processing zone).
+with `buildings_per_SME = 50` (urban) or `100` (rural), and \(N=\text{num\_buildings}\) if available else \(N=\text{households}\).
 
-## Insights
+\[
+E_{comm}=SME\cdot 600
+\]
 
-### Geographic Patterns
+**Agricultural demand**
 
-1. **Coastal/urban belt** (Cotonou to Porto-Novo): Grid dominates due to existing infrastructure density.
+- Mills (rural, population > 500): \(E_{mill}=\max(1,\lfloor pop/1500\rfloor)\cdot 4500\)
+- Irrigation (distance to water < 3 km, population > 300): \(E_{irr}=\max(1,\lfloor pop/800\rfloor)\cdot 3500\)
+- Dryers (latitude > 8°, rural, population > 400): \(E_{dryer}=\max(1,\lfloor pop/2000\rfloor)\cdot 6000\)
 
-2. **Central agricultural zone**: Mini-grids win because mills and irrigation pumps require more power than SHS can provide.
+**Public demand**
 
-3. **Northern savanna**: Mixed allocation. Agricultural centers need mini-grids; pastoral villages get SHS.
+\[
+E_{pub}=n_{health}\cdot 4000 + n_{edu}\cdot 1500
+\]
 
-### Investment Breakdown
+**Growth**
 
-| Technology | Investment | Cost per Person |
-|------------|-----------|-----------------|
-| Grid | ~$500M | ~$200 |
-| Mini-Grid | ~$1.6B | ~$150 |
-| SHS | ~$300M | ~$80 |
+\[
+G=\big((1+g_{pop})(1+g_{wealth})\big)^{H}
+\]
 
-### Sensitivity
+with \(g_{pop}=0.027\), \(g_{wealth}=0.015\), \(H=15\).
 
-The model is most sensitive to:
-- **Grid distance**: Beyond 5km from substations, grid rarely wins
-- **Productive loads**: Any commercial/agricultural load shifts away from SHS
-- **Population**: Settlements >500 people favor mini-grids (economies of scale)
+\[
+E_{proj}=(E_{res}+E_{comm}+E_{agri}+E_{pub})\cdot G
+\]
 
-## Limitations
+**Peak load**
 
-1. **Static model**: Does not sequence grid expansion over time
-2. **No diesel backup**: Mini-grids assume 100% solar+battery
-3. **Uniform solar resource**: Uses 18% capacity factor nationwide
-4. **Euclidean distances**: Road network topology not modeled
-5. **No financing costs**: Only discount rate, not subsidies or loans
+\[
+P_{peak}=\frac{E_{proj}}{8760\cdot LF(\text{tier})}
+\]
 
-## Usage
+### LCOE model
 
-### Install
+**Capital Recovery Factor**
+
+\[
+CRF(r,n)=\frac{r(1+r)^n}{(1+r)^n-1}
+\]
+
+Discount rate \(r=0.08\) by default.
+
+**Grid**
+
+\[
+dist\_{grid}=\min(dist\_{sub},\ dist\_{trans} + \frac{C_{sub}}{C_{MV/km}})
+\]
+
+Terrain factor is 1.3 when `dist_main_road_km > 10`, else 1.0.
+
+\[
+Ann_{grid}=CAPEX_{grid}\cdot(CRF(r,40)+0.02)+\left(\frac{E_{proj}}{1-0.18}\right)\cdot 0.10
+\]
+
+\[
+LCOE_{grid}=\frac{Ann_{grid}}{E_{proj}}
+\]
+
+**Mini-Grid (PV + battery)**
+
+\[
+PV_{kW}=\left(\frac{E_{proj}/365}{CF\cdot 24\cdot \eta}\right)\cdot 1.2
+\]
+
+with \(CF=0.18\), \(\eta=0.85\).
+
+\[
+Batt_{kWh}=\frac{E_{proj}/365}{DoD}
+\]
+
+with \(DoD=0.8\).
+
+\[
+NPV_{batt}=\sum_{y\in\{7,14\}} \frac{Batt_{kWh}\cdot 300}{(1+r)^y}
+\]
+
+\[
+LCOE_{mg}=\frac{CAPEX_{mg}\cdot(CRF(r,20)+0.03)}{E_{proj}}
+\]
+
+**SHS**
+
+\[
+E_{del}=\min\left(\frac{E_{proj}}{households},\ cap(\text{tier})\right)\cdot households
+\]
+
+\[
+LCOE_{shs}=\frac{CAPEX_{shs}\cdot(CRF(r,5)+0.05)}{E_{del}}
+\]
+
+Penalty: if `tier > 3` or any of `dem_comm`, `dem_agri`, `dem_pub` is positive, \(LCOE_{shs}=999.9\).
+
+**Selection**
+
+\[
+\text{optimal\_tech}=\arg\min(LCOE_{grid},LCOE_{mg},LCOE_{shs})
+\]
+
+## Results (example run on included `data/settlements.geojson`)
+
+- Technology counts: Grid 1,523; Mini-Grid 7,552; SHS 8,130
+- Total investment (sum of per-settlement CAPEX for the selected technology): USD 2,263,483,493
+
+## Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Run
-
-```bash
 python run_model.py --input data/settlements.geojson --output results.geojson
 ```
 
-### Programmatic
+## Notebook
 
-```python
-import geopandas as gpd
-from benin_least_cost.parameters import ProjectConfig
-from benin_least_cost.demand import run_demand_model
-from benin_least_cost.lcoe import run_lcoe_model
-
-gdf = gpd.read_file("data/settlements.geojson")
-config = ProjectConfig()
-
-# Modify parameters if needed
-config.planning.discount_rate = 0.10
-
-gdf = run_demand_model(gdf, config)
-gdf = run_lcoe_model(gdf, config)
-
-# Filter results
-minigrid_sites = gdf[gdf["optimal_tech"] == "MiniGrid"]
-```
-
-## Input Data
-
-Required fields in `settlements.geojson`:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `geometry` | Yes | Point or polygon |
-| `population` | Yes | Settlement population |
-| `mean_rwi` | No | Relative Wealth Index |
-| `dist_to_substations` | No | km to nearest substation |
-| `num_health_facilities` | No | Health centers count |
-| `num_education_facilities` | No | Schools count |
-
-## Output Data
-
-Each settlement gets:
-
-| Field | Description |
-|-------|-------------|
-| `projected_demand` | kWh/year (2040) |
-| `lcoe_grid` | Grid cost ($/kWh) |
-| `lcoe_mg` | Mini-grid cost ($/kWh) |
-| `lcoe_shs` | SHS cost ($/kWh) |
-| `optimal_tech` | Grid / MiniGrid / SHS |
-| `investment` | Required USD |
-
-## Project Structure
-
-```
-├── benin_least_cost/
-│   ├── demand.py       # Demand estimation
-│   ├── lcoe.py         # LCOE calculation
-│   ├── parameters.py   # All configurable values
-│   └── schema.py       # Field definitions
-├── data/
-│   ├── settlements.geojson
-│   └── infrastructure.geojson
-├── run_model.py        # CLI entry point
-└── requirements.txt
-```
-
-## Parameters
-
-All values in `parameters.py` can be modified:
-
-```python
-config = ProjectConfig()
-config.planning.discount_rate = 0.10      # Default: 0.08
-config.grid.mv_cost_per_km = 16000        # Default: 14000
-config.minigrid.pv_cost_per_kw = 600      # Default: 700
-```
+`notebooks/benin_electrification_walkthrough.ipynb` runs the full pipeline and writes `results.geojson`.

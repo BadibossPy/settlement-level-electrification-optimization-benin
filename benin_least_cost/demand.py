@@ -30,7 +30,14 @@ def run_demand_model(gdf: pd.DataFrame, config: Optional[ProjectConfig] = None) 
     agri_demand[irrig_mask] += np.maximum(1, (pop[irrig_mask] / 800).astype(int)) * loads["irrigation"]
     
     # Savanna dryers (North of 8.0 deg)
-    lats = gdf.geometry.centroid.y
+    if "lat" in gdf.columns:
+        lats = gdf["lat"]
+    else:
+        geom = gdf.geometry
+        if getattr(geom, "geom_type", None) is not None and (geom.geom_type == "Point").all():
+            lats = geom.y
+        else:
+            lats = geom.centroid.y
     dryer_mask = (lats > 8.0) & (~is_urban) & (pop > 400)
     agri_demand[dryer_mask] += np.maximum(1, (pop[dryer_mask] / 2000).astype(int)) * loads["dryer"]
     
@@ -53,8 +60,9 @@ def run_demand_model(gdf: pd.DataFrame, config: Optional[ProjectConfig] = None) 
     gravity = np.clip(1.0 + (20.0 / (dist_hub + 1.0)), 1.0, 2.5)
     base_density = np.where(gdf[DS.IS_URBAN], config.demand.urban_sme_ratio, config.demand.rural_sme_ratio) # buildings per SME
     
-    sme_count = (gdf.get(DS.NUM_BUILDINGS, gdf["households"]) / base_density) * gravity
-    gdf[DS.DEMAND_COMMERCIAL] = np.ceil(sme_count) * config.demand.anchor_loads["sme"]
+    sme_count = np.floor((gdf.get(DS.NUM_BUILDINGS, gdf["households"]) / base_density) * gravity)
+    sme_count = np.clip(sme_count, 0, None)
+    gdf[DS.DEMAND_COMMERCIAL] = sme_count * config.demand.anchor_loads["sme"]
 
     # Aggregate sectoral demand [kWh/yr]
     uptake = np.where(gdf[DS.IS_URBAN], 0.95, config.planning.target_uptake_rate)

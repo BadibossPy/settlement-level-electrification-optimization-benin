@@ -1,4 +1,7 @@
 __pycache__/
+.ipynb_checkpoints/
+results.geojson
+__pycache__/
 *.py[cod]
 *$py.class
 benin_results.geojson
