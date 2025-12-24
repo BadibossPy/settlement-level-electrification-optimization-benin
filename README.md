@@ -142,86 +142,14 @@ SHS is excluded if the settlement has productive loads (commercial, agricultural
 optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
 ```
 
-## Implementation Workflow
+## Pipeline (minimal, reproducible)
 
-```mermaid
-flowchart TB
-    subgraph Input["📥 INPUT DATA"]
-        A1[Settlement Data<br/>17,205 locations<br/>Population, wealth, infrastructure]
-    end
-    
-    subgraph Stage1["🏘️ SETTLEMENT ANALYSIS"]
-        B1[Classify Urban vs Rural<br/>Based on population and building density]
-        B2[Assign Energy Access Tier<br/>Tier 1, 2, or 3 based on wealth index]
-        B3[Count Households<br/>Estimate household numbers]
-    end
-    
-    subgraph Stage2["⚡ DEMAND ESTIMATION"]
-        C1[Residential Demand<br/>Household consumption by tier]
-        C2[Commercial Demand<br/>Small businesses and shops]
-        C3[Agricultural Demand<br/>Mills, irrigation, dryers]
-        C4[Public Services<br/>Health facilities and schools]
-        C5[Apply Growth to 2040<br/>Population + wealth growth]
-    end
-    
-    subgraph Stage3["💰 COST ANALYSIS"]
-        D1[Grid Extension<br/>Distance to grid<br/>Line costs, transformers<br/>Connection fees]
-        D2[Mini-Grid<br/>Solar panels<br/>Battery storage<br/>Inverters]
-        D3[Solar Home Systems<br/>Individual household<br/>systems by tier]
-    end
-    
-    subgraph Stage4["🎯 OPTIMIZATION"]
-        E1[Calculate Cost per kWh<br/>Levelized Cost of Electricity]
-        E2[Select Cheapest Option<br/>Grid, Mini-Grid, or SHS]
-    end
-    
-    subgraph Output["📊 RESULTS"]
-        F1[Technology Assignment<br/>per Settlement]
-        F2[Investment Requirements<br/>per Settlement]
-        F3[Aggregate Statistics<br/>Total investment: $2.26B<br/>Grid: 9% settlements, 81% population<br/>Mini-Grid: 44% settlements, 15% population<br/>SHS: 47% settlements, 4% population]
-    end
-    
-    A1 --> B1
-    B1 --> B2
-    B2 --> B3
-    
-    B3 --> C1
-    B3 --> C2
-    B3 --> C3
-    B3 --> C4
-    
-    C1 --> C5
-    C2 --> C5
-    C3 --> C5
-    C4 --> C5
-    
-    C5 --> D1
-    C5 --> D2
-    C5 --> D3
-    
-    D1 --> E1
-    D2 --> E1
-    D3 --> E1
-    
-    E1 --> E2
-    
-    E2 --> F1
-    E2 --> F2
-    
-    F1 --> F3
-    F2 --> F3
-    
-    style Input fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
-    style Stage1 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style Stage2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style Stage3 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Stage4 fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style Output fill:#e0f2f1,stroke:#00796b,stroke-width:3px
-    
-    style D1 fill:#c8e6c9
-    style D2 fill:#ffcc80
-    style D3 fill:#fff59d
-```
+1) **Input + validation**: `settlements.geojson` (geometry, population; optional wealth, buildings, distances, facilities). Schema checks nulls, negatives, and fills missing distances with safe defaults.
+2) **Categorize settlements**: urban flag (population/buildings), households (urban/rural sizes), MTF tier from RWI with nightlight uplift.
+3) **Demand model**: residential by tier and uptake; commercial via gravity + SME density; agricultural (mills, irrigation, dryers); public (health, schools); growth to 2040; peak via tier load factors.
+4) **Cost model**: grid (MV/LV/transformer/connection, losses, energy price), mini-grid (PV/battery/inverter with replacements), SHS (tier caps, exclusion when productive loads exist).
+5) **Optimization**: compute LCOE for each technology; select `argmin`; assign CAPEX as investment.
+6) **Outputs**: `results.geojson` with demand, peak, LCOE per tech, optimal tech, and investment. Notebook and CLI reproduce the same figures and KPIs cited above.
 
 ## Usage
 
