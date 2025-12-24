@@ -1,216 +1,239 @@
-## Settlement-level least-cost electrification (Benin, 2025–2040)
+# Settlement-Level Least-Cost Electrification (Benin, 2025-2040)
 
-Least-cost electrification analysis for Benin settlements. The implementation follows the assignment requirements: estimate demand over a planning horizon, compute LCOE for multiple technologies, and select the least-cost option per settlement.
+Least-cost electrification model for 17,205 settlements in Benin. Compares Grid Extension, Mini-Grid, and Solar Home Systems (SHS) using levelized cost of electricity (LCOE).
 
-*Updated: All equations now displayed as GitHub-compatible code blocks.*
+## Results
 
-## Architecture
+| Metric | Value |
+|--------|-------|
+| Settlements | 17,205 |
+| Grid | 1,523 (9%) |
+| Mini-Grid | 7,552 (44%) |
+| SHS | 8,130 (47%) |
+| Total Investment | USD 2.26B |
 
-```mermaid
-flowchart TD
-    subgraph INPUT[Input Data]
-        A[settlements.geojson]
-        B[infrastructure.geojson]
-    end
+## Method
 
-    subgraph DEMAND[Demand]
-        C[Urban flag + households]
-        D[MTF tier from RWI (+ nightlights)]
-        E[Residential + commercial + agri + public]
-        F[Growth + peak]
-    end
+The model estimates electricity demand per settlement and calculates LCOE for three technologies. The technology with minimum LCOE is selected.
 
-    subgraph LCOE[LCOE]
-        G[Grid]
-        H[Mini-Grid]
-        I[SHS (+ penalty)]
-    end
+### Demand Estimation
 
-    subgraph OUTPUT[Output]
-        J[Min LCOE]
-        K[results.geojson]
-    end
+**Household count**
 
-    A --> C --> D --> E --> F
-    B --> G
-    F --> G --> J
-    F --> H --> J
-    F --> I --> J
-    J --> K
 ```
-
-## Data
-
-### Required fields
-
-- `geometry`
-- `population`
-
-### Optional fields used (if present)
-
-- `num_buildings`, `mean_rwi`, `has_nightlight`
-- `dist_to_substations`, `distance_to_existing_transmission_lines`, `dist_main_road_km`
-- `dist_lake_river_km`, `dist_nearest_hub_km`
-- `num_health_facilities`, `num_education_facilities`
-- `lat` (used for the `> 8°N` dryer rule)
-
-## Methods (as implemented)
-
-All constants are in `benin_least_cost/parameters.py`.
-
-### Demand model
-
-**Urban flag**
-
-```python
-is_urban = (population > 5000) | (num_buildings > 500)
-```
-
-**Households**
-
-```python
 households = ceil(population / hh_size)
 ```
 
 where hh_size = 4.3 (urban) or 5.2 (rural).
 
-**Tiering (RWI)**
+**Tier assignment** (Multi-Tier Framework)
 
-```python
+```
 tier = 1 if RWI < -0.3 else 2 if RWI < 0.4 else 3
 ```
 
-If `has_nightlight > 0`, tier is raised to at least 2.
-
 **Residential demand**
 
-```python
+```
 E_res = households * tier_kwh[tier] * uptake
 ```
 
-where uptake = 0.95 (urban) or 0.85 (rural).
+where tier_kwh = {1: 35, 2: 220, 3: 850} kWh/year per household, uptake = 0.85 (rural) or 0.95 (urban).
 
-**Commercial demand**
+**Productive demand**
 
-```python
-gravity = min(max(1 + 20/(dist_hub + 1), 1), 2.5)
-n_SME = floor((N / k) * gravity)
+- Commercial: SMEs estimated from building density and distance to hubs (600 kWh/year per SME)
+- Agricultural: Mills, irrigation pumps, dryers allocated based on population and location
+- Public: Health facilities (4,000 kWh/year) and schools (1,500 kWh/year)
+
+**Growth projection**
+
 ```
-
-with k = 50 (urban) or 100 (rural), N = num_buildings if available else households.
-
-```python
-E_comm = n_SME * 600
-```
-
-**Agricultural demand**
-
-- Mills (rural, population > 500): `E_mill = max(1, floor(pop/1500)) * 4500`
-- Irrigation (dist_water < 3km, population > 300): `E_irr = max(1, floor(pop/800)) * 3500`
-- Dryers (latitude > 8°, rural, population > 400): `E_dryer = max(1, floor(pop/2000)) * 6000`
-
-**Public demand**
-
-```python
-E_pub = n_health * 4000 + n_edu * 1500
-```
-
-**Growth**
-
-```python
 G = (1 + g_pop) * (1 + g_wealth) ** H
-```
-
-with g_pop = 0.027, g_wealth = 0.015, H = 15.
-
-```python
 E_proj = (E_res + E_comm + E_agri + E_pub) * G
 ```
 
+with g_pop = 0.027, g_wealth = 0.015, H = 15 years.
+
 **Peak load**
 
-```python
+```
 P_peak = E_proj / (8760 * LF[tier])
 ```
 
-### LCOE model
+where LF = load factor (0.18 for tier 1, 0.20 for tier 2, 0.25 for tier 3).
+
+### Cost Model
 
 **Capital Recovery Factor**
 
-```python
-CRF = lambda r, n: r * (1+r)**n / ((1+r)**n - 1)
+```
+CRF(r, n) = r * (1+r)**n / ((1+r)**n - 1)
 ```
 
-Discount rate r = 0.08 by default.
+with discount rate r = 0.08.
 
-**Grid**
+**Grid Extension**
 
-```python
-d_grid = min(d_sub, d_trans + C_sub/C_MV)
+Grid LCOE accounts for:
+- MV line: $14,000/km (with 30% penalty if >10km from paved roads)
+- LV distribution: $5,500/km
+- Transformers: $8,000 per 45kVA unit
+- Connections: $150/household
+- Losses: 18%
+- Energy cost: $0.10/kWh
+
+**Mini-Grid** (solar + battery)
+
+PV sizing:
+
 ```
-
-Terrain factor = 1.3 when dist_main_road_km > 10, else 1.0.
-
-```python
-Ann_grid = CAPEX_grid * (CRF(r, 40) + 0.02) + (E_proj / 0.82) * 0.10
-```
-
-```python
-LCOE_grid = Ann_grid / E_proj
-```
-
-**Mini-Grid (PV + battery)**
-
-```python
 PV_kW = (E_proj / 365) / (CF * 24 * eta) * 1.2
 ```
 
-with CF = 0.18, eta = 0.85.
+with CF = 0.18 (capacity factor), eta = 0.85 (system efficiency).
 
-```python
+Battery sizing:
+
+```
 Batt_kWh = (E_proj / 365) / DoD
 ```
 
-with DoD = 0.8.
+with DoD = 0.8 (depth of discharge). Battery replacements at years 7 and 14 are included in NPV.
 
-```python
-NPV_batt = sum(Batt_kWh * 300 / (1+r)**y for y in [7, 14])
+Costs: PV $700/kWp, Battery $300/kWh, Inverter $180/kW.
+
+**Solar Home Systems**
+
+SHS costs per tier: {1: $80, 2: $250, 3: $600} per household.
+
+Energy capacity limits: {1: 35, 2: 150, 3: 350} kWh/year per household.
+
+SHS is excluded if the settlement has productive loads (commercial, agricultural, or public facilities).
+
+### Selection
+
 ```
-
-```python
-LCOE_mg = CAPEX_mg * (CRF(r, 20) + 0.03) / E_proj
-```
-
-**SHS**
-
-```python
-E_del = min(E_proj / households, cap[tier]) * households
-```
-
-```python
-LCOE_shs = CAPEX_shs * (CRF(r, 5) + 0.05) / E_del
-```
-
-Penalty: if tier > 3 or any productive demand > 0, LCOE_shs = 999.9.
-
-**Selection**
-
-```python
 optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
 ```
 
-## Results (example run on included `data/settlements.geojson`)
+## Architecture
 
-- Technology counts: Grid 1,523; Mini-Grid 7,552; SHS 8,130
-- Total investment (sum of per-settlement CAPEX for the selected technology): USD 2,263,483,493
+```
+Input:
+  settlements.geojson (population, location, wealth index, facilities)
+  infrastructure.geojson (grid lines, substations)
+  
+Processing:
+  1. Categorize settlements (urban/rural)
+  2. Assign MTF tier based on wealth index
+  3. Calculate sectoral demand (residential, commercial, agricultural, public)
+  4. Project demand to 2040
+  5. Calculate peak load
+  6. Compute LCOE for Grid, Mini-Grid, SHS
+  7. Select minimum LCOE technology
+  
+Output:
+  results.geojson (technology selection, investment per settlement)
+```
 
-## Run
+## Usage
+
+### Install
 
 ```bash
 pip install -r requirements.txt
+```
+
+### Run model
+
+```bash
 python run_model.py --input data/settlements.geojson --output results.geojson
 ```
 
-## Notebook
+### Notebook
 
-`notebooks/benin_electrification_walkthrough.ipynb` runs the full pipeline and writes `results.geojson`.
+Open `notebooks/electrification_analysis.ipynb` for step-by-step execution with visualizations.
+
+### Programmatic usage
+
+```python
+import geopandas as gpd
+from benin_least_cost.parameters import ProjectConfig
+from benin_least_cost.demand import run_demand_model
+from benin_least_cost.lcoe import run_lcoe_model
+
+gdf = gpd.read_file("data/settlements.geojson")
+config = ProjectConfig()
+
+gdf = run_demand_model(gdf, config)
+gdf = run_lcoe_model(gdf, config)
+
+print(gdf["optimal_tech"].value_counts())
+```
+
+## Data Requirements
+
+**Required fields:**
+- geometry (point or polygon)
+- population
+
+**Optional fields** (improve accuracy):
+- num_buildings, mean_rwi, has_nightlight
+- dist_to_substations, distance_to_existing_transmission_lines
+- dist_main_road_km, dist_lake_river_km
+- num_health_facilities, num_education_facilities
+
+## Output Fields
+
+- projected_demand (kWh/year, 2040)
+- projected_peak (kW)
+- lcoe_grid, lcoe_mg, lcoe_shs (USD/kWh)
+- optimal_tech (Grid / MiniGrid / SHS)
+- investment (USD, CAPEX for selected technology)
+
+## Parameters
+
+All model parameters are in `benin_least_cost/parameters.py` and can be modified:
+
+```python
+config = ProjectConfig()
+config.planning.discount_rate = 0.10  # default: 0.08
+config.grid.mv_cost_per_km = 16000    # default: 14000
+```
+
+## Assumptions
+
+- Planning horizon: 15 years (2025-2040)
+- Population growth: 2.7% annually
+- Wealth growth: 1.5% annually
+- Discount rate: 8%
+- Solar capacity factor: 18%
+- Grid technical losses: 18%
+- All settlements can technically receive electricity from any technology
+
+## Limitations
+
+- Static model (does not sequence investments over time)
+- Uniform solar resource (18% CF nationwide)
+- Euclidean distances (road network not modeled)
+- No diesel backup for mini-grids
+- No consideration of grid reliability or power quality
+
+## Project Structure
+
+```
+├── benin_least_cost/
+│   ├── demand.py          # Demand estimation
+│   ├── lcoe.py            # LCOE calculation
+│   ├── parameters.py      # Model parameters
+│   └── schema.py          # Data validation
+├── data/
+│   ├── settlements.geojson
+│   └── infrastructure.geojson
+├── notebooks/
+│   └── electrification_analysis.ipynb
+├── run_model.py           # CLI entry point
+└── requirements.txt
+```
+
