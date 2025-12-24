@@ -1,5 +1,9 @@
 # Settlement-Level Least-Cost Electrification (Benin, 2025-2040)
 
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
+
 Least-cost electrification model for 17,205 settlements in Benin comparing Grid, Mini-Grid, and Solar Home Systems (SHS).
 
 ## Results
@@ -68,11 +72,18 @@ flowchart TB
 
 **Optional:** `num_buildings`, `mean_rwi`, `has_nightlight`, `dist_to_substations`, `distance_to_existing_transmission_lines`, `dist_main_road_km`, `dist_lake_river_km`, `num_health_facilities`, `num_education_facilities`
 
+## Installation
+
+```bash
+git clone https://github.com/BadibossPy/settlement-level-electrification-optimization-benin.git
+cd settlement-level-electrification-optimization-benin
+pip install -e .
+```
+
 ## Usage
 
 **CLI:**
 ```bash
-pip install -r requirements.txt
 python run_model.py --input data/settlements.geojson --output results.geojson
 ```
 
