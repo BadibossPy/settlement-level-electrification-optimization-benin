@@ -4,7 +4,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
 
-Open-source toolkit that fuses satellite-derived settlement data with Multi-Tier Framework demand modelling and rigorous LCOE costing. It reveals the least-cost technology (Grid, Mini-Grid, SHS) for every settlement—actionable for planners, banks, and researchers.
+Open-source toolkit combining geospatial analytics with Multi-Tier demand modelling and strict LCOE costing.
+
+**Why it stands out**
+- Spatial resolution: every known settlement evaluated.
+- Technology-agnostic: grid, mini-grid, and SHS cost curves in one model.
+- Transparent parameters: all assumptions centralized in `parameters.py`.
+- Reproducible: single CLI command or Python API call.
+- Policy-ready outputs: investment and technology map directly usable by planners, financiers, and researchers.
 
 ## Headline numbers
 
@@ -140,6 +147,27 @@ All parameters in `benin_least_cost/parameters.py`:
 │   └── electrification_analysis.ipynb
 └── requirements.txt
 ```
+
+## Next steps
+
+### Input preparation
+- **Settlement points** — any GeoJSON/GeoPackage with at least `geometry` and `population`. Optional columns (buildings, RWI, distances, facilities) improve accuracy.
+- **Infrastructure distances** — compute `dist_to_substations`, `distance_to_existing_transmission_lines`, and `dist_main_road_km` with standard GIS nearest-line tools (PostGIS `ST_Distance`, QGIS ‘Distance to nearest hub’).
+- **Wealth proxy (RWI)** — download raster from WorldPop Relative Wealth Index, sample mean value at each settlement.
+- **Night-lights** — VIIRS night-time lights, threshold >0 to upgrade Tier 1 settlements to Tier 2.
+- **Facilities** — point layers of health and education sites, aggregated per settlement.
+
+### Data sources
+- WorldPop 2025 population, relative wealth index
+- GRID3 settlement layers (Benin)
+- World Bank night-lights (VIIRS, 2024 composite)
+- OpenStreetMap roads, health, and education facilities (Geofabrik extract)
+- Africa Electricity Transmission & Substation GIS (KTH / World Bank)
+
+### Roadmap
+1. **Scenario module** — run sensitivities (cost decline, discount rate) via YAML config.
+2. **Web map** — publish results and methodology on an interactive map.
+3. **Integration** — link with national least-cost grid expansion tools (e.g., NetworkPlanner) for corridor optimisation.
 
 ## Verification
 
