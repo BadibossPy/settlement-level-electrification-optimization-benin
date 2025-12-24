@@ -1,62 +1,85 @@
 # Settlement-Level Least-Cost Electrification (Benin, 2025-2040)
 
-Least-cost model for 17,205 settlements in Benin. Technologies: Grid Extension, Mini-Grid (PV + battery), Solar Home Systems (SHS). Demand follows the ESMAP Multi-Tier Framework; selection is by minimum LCOE.
+Least-cost electrification model for 17,205 settlements in Benin comparing Grid, Mini-Grid, and Solar Home Systems (SHS).
 
-## Headline results
-| Metric | Value |
-| --- | --- |
-| Settlements | 17,205 |
-| Population | 14,111,192 |
-| Grid | 1,523 (9%) |
-| Mini-Grid | 7,552 (44%) |
-| SHS | 8,130 (47%) |
-| Total Investment | USD 2.26B |
-| Projected Demand 2040 | 2,694 GWh/year |
+## Results
 
-## Pipeline (workflow)
+| Technology | Settlements | Population | Investment |
+|------------|-------------|------------|------------|
+| Grid | 1,523 (9%) | 11.5M (81%) | $1.58B |
+| Mini-Grid | 7,552 (44%) | 2.1M (15%) | $0.67B |
+| SHS | 8,130 (47%) | 0.5M (4%) | $0.01B |
+| **Total** | **17,205** | **14.1M** | **$2.26B** |
+
+## Workflow
+
 ```mermaid
 flowchart LR
-    A[Input\nsettlements.geojson] --> B[Validate\nrequired fields, defaults]
-    B --> C[Categorize\nurban/rural, households, tier (+nightlight)]
-    C --> D[Demand\nres/commercial/agri/public + growth + peak]
-    D --> E[Cost\nGrid MV/LV/tx + losses; Mini-grid PV/battery/inverter; SHS caps/exclusions]
-    E --> F[Optimize\nargmin LCOE]
-    F --> G[Output\nresults.geojson\ntech, LCOE, investment, demand, peak]
+    A[settlements.geojson] --> B[Validate]
+    B --> C[Categorize]
+    C --> D[Demand]
+    D --> E[LCOE]
+    E --> F[Select min]
+    F --> G[results.geojson]
 ```
-1) Validate inputs.  
-2) Categorize settlements.  
-3) Demand: sectors, growth, peak.  
-4) Cost: grid / mini-grid / SHS.  
-5) Optimize: lowest LCOE, carry CAPEX.  
-6) Output: GeoJSON + notebook/CLI reproducibility.
 
-## Method
-- Demand: households by urban/rural size; tier from RWI (+nightlights); sector loads (residential, SME gravity, agri mills/irrigation/dryers, public); growth to 2040; peak via tier load factors.
-- Cost: grid MV/LV/transformers/connections + losses and energy price; mini-grid PV/battery/inverter with replacements; SHS tier caps and exclusion when productive loads exist.
-- Selection: `argmin(LCOE_grid, LCOE_mg, LCOE_shs)`; investment = CAPEX of chosen tech.
+**Steps:**
+1. **Validate** - Check geometry and population fields
+2. **Categorize** - Urban/rural classification, MTF tier assignment
+3. **Demand** - Residential + commercial + agricultural + public loads, growth to 2040
+4. **LCOE** - Grid (distance + infrastructure), Mini-Grid (PV + battery), SHS (tier-based)
+5. **Select** - Minimum LCOE per settlement
+6. **Output** - Technology assignment and investment per settlement
 
 ## Data
-- Required: geometry, population.
-- Optional: num_buildings, mean_rwi, has_nightlight, dist_to_substations, distance_to_existing_transmission_lines, dist_main_road_km, dist_lake_river_km, dist_nearest_hub_km, num_health_facilities, num_education_facilities.
 
-## Outputs
-- GeoJSON fields: projected_demand, projected_peak, lcoe_grid, lcoe_mg, lcoe_shs, optimal_tech, investment.
+**Required:** `geometry`, `population`
+
+**Optional:** `num_buildings`, `mean_rwi`, `has_nightlight`, `dist_to_substations`, `distance_to_existing_transmission_lines`, `dist_main_road_km`, `dist_lake_river_km`, `num_health_facilities`, `num_education_facilities`
 
 ## Usage
+
 ```bash
 pip install -r requirements.txt
 python run_model.py --input data/settlements.geojson --output results.geojson
 ```
-Notebook: `notebooks/electrification_analysis.ipynb` (executed, plots embedded).
 
-## Assumptions
-- Horizon 15y; g_pop 2.7%/y; g_wealth 1.5%/y; discount 8%; solar CF 18%; grid losses 18%; SHS excluded when productive loads exist.
+## Output Fields
 
-## Limits
-- Static (no phasing), uniform solar CF, Euclidean distances, no diesel backup, no reliability modeling.
+- `projected_demand` - Annual demand 2040 (kWh/year)
+- `projected_peak` - Peak load (kW)
+- `lcoe_grid`, `lcoe_mg`, `lcoe_shs` - LCOE per technology (USD/kWh)
+- `optimal_tech` - Selected technology (Grid / MiniGrid / SHS)
+- `investment` - CAPEX for selected technology (USD)
+
+## Parameters
+
+All parameters in `benin_least_cost/parameters.py`:
+- Planning: discount rate 8%, horizon 15 years, population growth 2.7%
+- Grid: MV $14,000/km, LV $5,500/km, transformer $8,000, losses 18%
+- Mini-Grid: PV $700/kW, battery $300/kWh, CF 18%
+- SHS: $80-$600 per household by tier
+
+## Structure
+
+```
+├── benin_least_cost/
+│   ├── demand.py      # Demand estimation
+│   ├── lcoe.py        # LCOE and selection
+│   ├── parameters.py  # All parameters
+│   └── schema.py      # Data validation
+├── data/
+│   └── settlements.geojson
+├── notebooks/
+│   └── electrification_analysis.ipynb
+├── run_model.py
+└── requirements.txt
+```
 
 ## Verification
-- `pytest tests/test_logic.py`
-- `jupyter nbconvert --execute notebooks/electrification_analysis.ipynb`
-- `results.geojson` generated from current code/config.
+
+```bash
+pytest tests/
+jupyter nbconvert --execute notebooks/electrification_analysis.ipynb
+```
 
