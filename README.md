@@ -14,22 +14,53 @@ Least-cost electrification model for 17,205 settlements in Benin comparing Grid,
 ## Workflow
 
 ```mermaid
-flowchart LR
-    A[settlements.geojson] --> B[Validate]
-    B --> C[Categorize]
-    C --> D[Demand]
-    D --> E[LCOE]
-    E --> F[Select min]
-    F --> G[results.geojson]
-```
+flowchart TB
+    subgraph INPUT["1. INPUT"]
+        A[settlements.geojson<br/>17,205 settlements<br/>population, wealth, distances]
+    end
 
-**Steps:**
-1. **Validate** - Check geometry and population fields
-2. **Categorize** - Urban/rural classification, MTF tier assignment
-3. **Demand** - Residential + commercial + agricultural + public loads, growth to 2040
-4. **LCOE** - Grid (distance + infrastructure), Mini-Grid (PV + battery), SHS (tier-based)
-5. **Select** - Minimum LCOE per settlement
-6. **Output** - Technology assignment and investment per settlement
+    subgraph CLASSIFY["2. CLASSIFICATION"]
+        B1[Urban/Rural<br/>pop > 5000 or buildings > 500]
+        B2[MTF Tier 1-3<br/>from wealth index RWI]
+        B3[Households<br/>pop / hh_size]
+    end
+
+    subgraph DEMAND["3. DEMAND ESTIMATION"]
+        C1[Residential<br/>households × tier_kWh × uptake]
+        C2[Commercial<br/>SME count × 600 kWh]
+        C3[Agricultural<br/>mills + irrigation + dryers]
+        C4[Public<br/>health + education facilities]
+        C5[Growth 2025→2040<br/>pop 2.7% + wealth 1.5%]
+    end
+
+    subgraph COST["4. LCOE CALCULATION"]
+        D1[Grid<br/>MV distance + LV + transformers<br/>+ connections + energy cost]
+        D2[Mini-Grid<br/>PV sizing + battery + inverter<br/>+ replacements Y7,Y14]
+        D3[SHS<br/>unit cost by tier<br/>excluded if productive loads]
+    end
+
+    subgraph SELECT["5. OPTIMIZATION"]
+        E1[LCOE comparison<br/>Grid vs Mini-Grid vs SHS]
+        E2[Select minimum<br/>per settlement]
+    end
+
+    subgraph OUTPUT["6. OUTPUT"]
+        F[results.geojson<br/>optimal_tech + investment<br/>per settlement]
+    end
+
+    A --> B1 --> B2 --> B3
+    B3 --> C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 --> C5
+    C5 --> D1 & D2 & D3
+    D1 & D2 & D3 --> E1 --> E2 --> F
+
+    style INPUT fill:#e3f2fd
+    style CLASSIFY fill:#fff3e0
+    style DEMAND fill:#f3e5f5
+    style COST fill:#e8f5e9
+    style SELECT fill:#fce4ec
+    style OUTPUT fill:#e0f2f1
+```
 
 ## Data
 
