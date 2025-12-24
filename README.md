@@ -4,9 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
 
-Least-cost electrification model for 17,205 settlements in Benin comparing Grid, Mini-Grid, and Solar Home Systems (SHS).
+Open-source toolkit that fuses satellite-derived settlement data with Multi-Tier Framework demand modelling and rigorous LCOE costing. It reveals the least-cost technology (Grid, Mini-Grid, SHS) for every settlement—actionable for planners, banks, and researchers.
 
-## Results
+## Headline numbers
 
 | Technology | Settlements | Population | Investment |
 |------------|-------------|------------|------------|
