@@ -117,24 +117,196 @@ SHS is excluded if the settlement has productive loads (commercial, agricultural
 optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
 ```
 
-## Architecture
+## Implementation Workflow
+
+### Stage 1: Data Validation
 
 ```
-Input:
-  settlements.geojson (population, location, wealth index, facilities)
-  infrastructure.geojson (grid lines, substations)
-  
-Processing:
-  1. Categorize settlements (urban/rural)
-  2. Assign MTF tier based on wealth index
-  3. Calculate sectoral demand (residential, commercial, agricultural, public)
-  4. Project demand to 2040
-  5. Calculate peak load
-  6. Compute LCOE for Grid, Mini-Grid, SHS
-  7. Select minimum LCOE technology
-  
+Input: settlements.geojson (17,205 settlements)
+├─ Required: geometry, population
+└─ Optional: num_buildings, mean_rwi, has_nightlight, infrastructure distances, facilities
+
+Validation:
+├─ Check geometry type (Point/Polygon)
+├─ Enforce population > 0
+├─ Handle missing optional fields (fill defaults or compute from population)
+└─ Ensure CRS compatibility
+
+Output: validated GeoDataFrame
+```
+
+### Stage 2: Settlement Categorization
+
+```
+For each settlement:
+
+Urban/Rural Classification:
+├─ IF population > 5000 OR num_buildings > 500 → urban
+└─ ELSE → rural
+
+Household Estimation:
+├─ households = ceil(population / hh_size)
+├─ hh_size = 4.3 (urban) or 5.2 (rural)
+
+Tier Assignment (Multi-Tier Framework):
+├─ Base tier from Relative Wealth Index (RWI):
+│   ├─ RWI < -0.3 → tier 1
+│   ├─ RWI < 0.4 → tier 2
+│   └─ RWI ≥ 0.4 → tier 3
+└─ Nightlight adjustment: IF has_nightlight > 0 → tier = max(tier, 2)
+```
+
+### Stage 3: Demand Estimation
+
+```
+Residential Demand:
+├─ E_res = households × tier_kwh[tier] × uptake
+├─ tier_kwh = {1: 35, 2: 220, 3: 850} kWh/year per household
+└─ uptake = 0.85 (rural) or 0.95 (urban)
+
+Commercial Demand:
+├─ Gravity factor: g = clip(1 + 20/(dist_hub + 1), 1, 2.5)
+├─ SME count: n_SME = floor((N / k) × g)
+│   ├─ k = 50 (urban) or 100 (rural) buildings per SME
+│   └─ N = num_buildings if available, else households
+└─ E_comm = n_SME × 600 kWh/year per SME
+
+Agricultural Demand (rural only):
+├─ Mills: IF pop > 500 → E_mill = max(1, floor(pop/1500)) × 4500
+├─ Irrigation: IF dist_water < 3km AND pop > 300 → E_irr = max(1, floor(pop/800)) × 3500
+└─ Dryers: IF lat > 8° AND pop > 400 → E_dryer = max(1, floor(pop/2000)) × 6000
+
+Public Demand:
+└─ E_pub = n_health × 4000 + n_edu × 1500
+
+Growth Projection (2025 → 2040):
+├─ G = (1 + g_pop) × (1 + g_wealth) ^ H
+├─ g_pop = 0.027, g_wealth = 0.015, H = 15 years
+└─ E_proj = (E_res + E_comm + E_agri + E_pub) × G
+
+Peak Load:
+├─ P_peak = E_proj / (8760 × LF[tier])
+└─ LF = {1: 0.18, 2: 0.20, 3: 0.25} (load factor)
+```
+
+### Stage 4: Grid Extension LCOE
+
+```
+Distance Calculation:
+├─ d_eff_sub = dist_to_substations
+├─ d_eff_trans = dist_to_transmission + (C_sub / C_MV)
+└─ d_grid = min(d_eff_sub, d_eff_trans)
+
+Terrain Factor:
+└─ terrain = 1.3 IF dist_main_road > 10km ELSE 1.0
+
+MV Line Cost:
+├─ C_MV_line = d_grid × C_MV × terrain
+└─ C_MV = $14,000/km
+
+LV Distribution Cost:
+├─ radius = sqrt(area / π) for polygons, or estimated from population
+├─ C_LV = 2 × radius × C_LV_per_km
+└─ C_LV_per_km = $5,500/km
+
+Transformer Cost:
+├─ n_transformers = ceil(P_peak / 45)
+└─ C_transformer = n_transformers × $8,000
+
+Connection Cost:
+└─ C_connections = households × $150
+
+Total CAPEX:
+└─ CAPEX_grid = C_MV_line + C_LV + C_transformer + C_connections
+
+Annualized Cost:
+├─ CRF(r, n) = r × (1+r)^n / ((1+r)^n - 1)
+├─ Ann_CAPEX = CAPEX_grid × (CRF(0.08, 40) + 0.02)
+├─ Ann_OPEX = (E_proj / 0.82) × 0.10  [accounting for 18% losses]
+└─ Ann_grid = Ann_CAPEX + Ann_OPEX
+
+LCOE:
+└─ LCOE_grid = Ann_grid / E_proj
+```
+
+### Stage 5: Mini-Grid LCOE
+
+```
+PV Sizing:
+├─ Daily demand = E_proj / 365
+├─ PV_kW = (Daily demand / (CF × 24 × eta)) × safety_factor
+├─ CF = 0.18 (capacity factor), eta = 0.85 (efficiency), safety = 1.2
+└─ C_PV = PV_kW × $700
+
+Battery Sizing:
+├─ Batt_kWh = Daily demand / DoD
+├─ DoD = 0.8 (depth of discharge)
+├─ NPV_replacements = sum(Batt_kWh × 300 / (1.08)^y for y in [7, 14])
+└─ C_batt = Batt_kWh × 300 + NPV_replacements
+
+Inverter Cost:
+└─ C_inv = PV_kW × $180
+
+Total CAPEX:
+└─ CAPEX_mg = C_PV + C_batt + C_inv
+
+LCOE:
+├─ Ann_mg = CAPEX_mg × (CRF(0.08, 20) + 0.03)
+└─ LCOE_mg = Ann_mg / E_proj
+```
+
+### Stage 6: SHS LCOE
+
+```
+Capacity Constraints:
+├─ cap[tier] = {1: 35, 2: 150, 3: 350} kWh/year per household
+└─ E_del = min(E_proj / households, cap[tier]) × households
+
+CAPEX:
+├─ unit_cost[tier] = {1: $80, 2: $250, 3: $600} per household
+└─ CAPEX_shs = households × unit_cost[tier]
+
+Exclusion Logic:
+└─ IF tier > 3 OR E_comm > 0 OR E_agri > 0 OR E_pub > 0 → LCOE_shs = 999.9
+
+LCOE (if not excluded):
+├─ Ann_shs = CAPEX_shs × (CRF(0.08, 5) + 0.05)
+└─ LCOE_shs = Ann_shs / E_del
+```
+
+### Stage 7: Technology Selection
+
+```
+For each settlement:
+├─ Compute: LCOE_grid, LCOE_mg, LCOE_shs
+├─ Select: optimal_tech = argmin(LCOE_grid, LCOE_mg, LCOE_shs)
+└─ Investment = CAPEX[optimal_tech]
+
 Output:
-  results.geojson (technology selection, investment per settlement)
+└─ results.geojson with fields:
+    ├─ projected_demand, projected_peak
+    ├─ lcoe_grid, lcoe_mg, lcoe_shs
+    ├─ optimal_tech
+    └─ investment
+```
+
+### Computation Flow
+
+```
+settlements.geojson → Validation → Categorization → Demand Model
+                                                          ↓
+                                                    E_proj, P_peak
+                                                          ↓
+                        ┌─────────────────────────────────┼─────────────────────────────────┐
+                        ↓                                 ↓                                 ↓
+                   Grid LCOE                         MG LCOE                           SHS LCOE
+                 (d_grid, terrain)              (PV, battery, inv)                (tier, exclusion)
+                        ↓                                 ↓                                 ↓
+                        └─────────────────────────────────┼─────────────────────────────────┘
+                                                          ↓
+                                                   argmin(LCOE_*)
+                                                          ↓
+                                                  results.geojson
 ```
 
 ## Usage
