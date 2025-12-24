@@ -137,102 +137,82 @@ optimal_tech = argmin([LCOE_grid, LCOE_mg, LCOE_shs])
 ## Implementation Workflow
 
 ```mermaid
-flowchart TD
-    Start[settlements.geojson<br/>17,205 settlements] --> V1{Validation}
-    V1 -->|geometry, population| V2[Validated GeoDataFrame]
+flowchart TB
+    subgraph Input["📥 INPUT DATA"]
+        A1[Settlement Data<br/>17,205 locations<br/>Population, wealth, infrastructure]
+    end
     
-    V2 --> C1[Settlement Categorization]
-    C1 --> C2{pop > 5000 OR<br/>buildings > 500?}
-    C2 -->|Yes| Urban[Urban]
-    C2 -->|No| Rural[Rural]
+    subgraph Stage1["🏘️ SETTLEMENT ANALYSIS"]
+        B1[Classify Urban vs Rural<br/>Based on population and building density]
+        B2[Assign Energy Access Tier<br/>Tier 1, 2, or 3 based on wealth index]
+        B3[Count Households<br/>Estimate household numbers]
+    end
     
-    Urban --> H1[households = ceil pop/4.3]
-    Rural --> H2[households = ceil pop/5.2]
+    subgraph Stage2["⚡ DEMAND ESTIMATION"]
+        C1[Residential Demand<br/>Household consumption by tier]
+        C2[Commercial Demand<br/>Small businesses and shops]
+        C3[Agricultural Demand<br/>Mills, irrigation, dryers]
+        C4[Public Services<br/>Health facilities and schools]
+        C5[Apply Growth to 2040<br/>Population + wealth growth]
+    end
     
-    H1 --> T1[Tier Assignment]
-    H2 --> T1
+    subgraph Stage3["💰 COST ANALYSIS"]
+        D1[Grid Extension<br/>Distance to grid<br/>Line costs, transformers<br/>Connection fees]
+        D2[Mini-Grid<br/>Solar panels<br/>Battery storage<br/>Inverters]
+        D3[Solar Home Systems<br/>Individual household<br/>systems by tier]
+    end
     
-    T1 --> T2{RWI?}
-    T2 -->|< -0.3| Tier1[Tier 1]
-    T2 -->|< 0.4| Tier2[Tier 2]
-    T2 -->|≥ 0.4| Tier3[Tier 3]
+    subgraph Stage4["🎯 OPTIMIZATION"]
+        E1[Calculate Cost per kWh<br/>Levelized Cost of Electricity]
+        E2[Select Cheapest Option<br/>Grid, Mini-Grid, or SHS]
+    end
     
-    Tier1 --> T3{Nightlight?}
-    Tier2 --> T3
-    Tier3 --> T3
-    T3 -->|has_nightlight > 0| TierAdj[tier = max tier, 2]
-    T3 -->|else| TierFinal[Final Tier]
-    TierAdj --> TierFinal
+    subgraph Output["📊 RESULTS"]
+        F1[Technology Assignment<br/>per Settlement]
+        F2[Investment Requirements<br/>per Settlement]
+        F3[Aggregate Statistics<br/>Total investment: $2.26B<br/>Grid: 9% settlements, 81% population<br/>Mini-Grid: 44% settlements, 15% population<br/>SHS: 47% settlements, 4% population]
+    end
     
-    TierFinal --> D1[Demand Estimation]
+    A1 --> B1
+    B1 --> B2
+    B2 --> B3
     
-    D1 --> D2[Residential<br/>households × tier_kWh × uptake]
-    D1 --> D3[Commercial<br/>SME_count × 600]
-    D1 --> D4[Agricultural<br/>mills + irrigation + dryers]
-    D1 --> D5[Public<br/>health + education]
+    B3 --> C1
+    B3 --> C2
+    B3 --> C3
+    B3 --> C4
     
-    D2 --> D6[E_base = E_res + E_comm + E_agri + E_pub]
-    D3 --> D6
-    D4 --> D6
-    D5 --> D6
+    C1 --> C5
+    C2 --> C5
+    C3 --> C5
+    C4 --> C5
     
-    D6 --> D7[Growth Projection<br/>G = 1.027 × 1.015^15 = 1.74]
-    D7 --> D8[E_proj = E_base × G]
-    D8 --> D9[P_peak = E_proj / 8760 × LF]
+    C5 --> D1
+    C5 --> D2
+    C5 --> D3
     
-    D9 --> Split{Compute LCOE<br/>for all technologies}
+    D1 --> E1
+    D2 --> E1
+    D3 --> E1
     
-    Split --> G1[Grid LCOE]
-    Split --> M1[Mini-Grid LCOE]
-    Split --> S1[SHS LCOE]
+    E1 --> E2
     
-    G1 --> G2[Distance Calculation<br/>d_grid = min d_sub, d_trans]
-    G2 --> G3[Terrain Factor<br/>1.3 if road > 10km]
-    G3 --> G4[CAPEX Components:<br/>MV line + LV dist + transformers + connections]
-    G4 --> G5[Annualized Cost<br/>CAPEX × CRF 0.08,40 + OPEX]
-    G5 --> G6[LCOE_grid = Ann / E_proj]
+    E2 --> F1
+    E2 --> F2
     
-    M1 --> M2[PV Sizing<br/>daily_demand / CF × 24 × eta × 1.2]
-    M2 --> M3[Battery Sizing<br/>daily_demand / DoD<br/>+ replacements Y7, Y14]
-    M3 --> M4[CAPEX = PV + Battery + Inverter<br/>$700/kW + $300/kWh + $180/kW]
-    M4 --> M5[Annualized Cost<br/>CAPEX × CRF 0.08,20]
-    M5 --> M6[LCOE_mg = Ann / E_proj]
+    F1 --> F3
+    F2 --> F3
     
-    S1 --> S2{Exclusion Check<br/>tier > 3 OR<br/>productive loads?}
-    S2 -->|Yes| S3[LCOE_shs = 999.9]
-    S2 -->|No| S4[Capacity Constraint<br/>E_del = min E_proj/hh, cap]
-    S4 --> S5[CAPEX = households × unit_cost<br/>$80/$250/$600 by tier]
-    S5 --> S6[Annualized Cost<br/>CAPEX × CRF 0.08,5]
-    S6 --> S7[LCOE_shs = Ann / E_del]
+    style Input fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style Stage1 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Stage2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Stage3 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style Stage4 fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style Output fill:#e0f2f1,stroke:#00796b,stroke-width:3px
     
-    G6 --> Select[Technology Selection]
-    M6 --> Select
-    S3 --> Select
-    S7 --> Select
-    
-    Select --> Opt{argmin LCOE}
-    
-    Opt -->|Grid| OptGrid[Selected: Grid<br/>Investment = CAPEX_grid<br/>LCOE = 0.38 $/kWh]
-    Opt -->|MiniGrid| OptMG[Selected: Mini-Grid<br/>Investment = CAPEX_mg<br/>LCOE = 0.80 $/kWh]
-    Opt -->|SHS| OptSHS[Selected: SHS<br/>Investment = CAPEX_shs<br/>LCOE = 0.63 $/kWh]
-    
-    OptGrid --> Output[results.geojson<br/>17,205 settlements<br/>optimal_tech, investment, LCOE]
-    OptMG --> Output
-    OptSHS --> Output
-    
-    Output --> Results[Results:<br/>Grid: 1,523 9%<br/>MiniGrid: 7,552 44%<br/>SHS: 8,130 47%<br/>Total: $2.26B]
-    
-    style Start fill:#e1f5ff
-    style Results fill:#d4edda
-    style Urban fill:#fff3cd
-    style Rural fill:#fff3cd
-    style Tier1 fill:#f8d7da
-    style Tier2 fill:#fff3cd
-    style Tier3 fill:#d4edda
-    style OptGrid fill:#28a745,color:#fff
-    style OptMG fill:#fd7e14,color:#fff
-    style OptSHS fill:#ffc107
-    style Output fill:#e1f5ff
+    style D1 fill:#c8e6c9
+    style D2 fill:#ffcc80
+    style D3 fill:#fff59d
 ```
 
 ## Usage
