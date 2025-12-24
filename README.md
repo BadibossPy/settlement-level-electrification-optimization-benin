@@ -29,6 +29,14 @@ Least-cost electrification model for 17,205 settlements in Benin. Compares Grid 
 - Mini-Grids serve medium-sized settlements with higher per-capita costs ($317) but moderate LCOE ($0.80/kWh)
 - SHS serves smallest settlements with lowest per-capita cost ($26) but limited capacity (35-350 kWh/year/household)
 
+### Decision context
+
+- **Government and regulators**: spatial rollout can prioritize the 1,523 grid-ready settlements to capture 81% of population while deploying rural incentives for remaining 91% of settlements that require decentralized systems.
+- **Utilities and system planners**: grid investments concentrate in corridors where `dist_to_substations` is low; remote nodes beyond ~35 km from backbone (median Mini-Grid distance) show diminishing returns for grid.
+- **Banks and DFIs**: capital deployment ratio Grid:Mini-Grid:SHS = 70:30:<1 underscores where concessional lines should target (Mini-Grid clusters) while SHS needs mostly working-capital style facilities.
+- **Startups and IPPs**: Mini-Grid nodes average 2,100 people and 147 GWh/year of demand, defining market size for portfolio aggregation; SHS nodes average 62 households with negligible productive load.
+- **Research and academia**: the dataset (17,205 observations, validated schema, executed notebook) is reproducible and extensible for scenario analysis (discount rate, demand, technology costs).
+
 ## Method
 
 The model estimates electricity demand per settlement and calculates LCOE for three technologies. The technology with minimum LCOE is selected.
@@ -305,6 +313,12 @@ config.grid.mv_cost_per_km = 16000    # default: 14000
 - Euclidean distances (road network not modeled)
 - No diesel backup for mini-grids
 - No consideration of grid reliability or power quality
+
+## Verification
+
+- `pytest tests/test_logic.py`: validates CRF, demand growth, parameter guards, and LCOE selection logic.
+- `jupyter nbconvert --to notebook --execute notebooks/electrification_analysis.ipynb`: executes all analytical cells, embeds figures, and reproduces KPIs cited above.
+- `results.geojson`: generated from the latest run of `run_model.py` using `data/settlements.geojson`, ensuring README metrics reflect actual outputs.
 
 ## Project Structure
 
