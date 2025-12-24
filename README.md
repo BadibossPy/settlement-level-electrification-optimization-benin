@@ -19,37 +19,37 @@ Least-cost electrification model for 17,205 settlements in Benin comparing Grid,
 
 ```mermaid
 flowchart TB
-    subgraph INPUT["1. INPUT"]
-        A[settlements.geojson<br/>17,205 settlements<br/>population, wealth, distances]
+    subgraph INPUT["INPUT"]
+        A[Geospatial Settlement Data]
     end
 
-    subgraph CLASSIFY["2. CLASSIFICATION"]
-        B1[Urban/Rural<br/>pop > 5000 or buildings > 500]
-        B2[MTF Tier 1-3<br/>from wealth index RWI]
-        B3[Households<br/>pop / hh_size]
+    subgraph CLASSIFY["CLASSIFICATION"]
+        B1[Urban / Rural]
+        B2[Energy Access Tier]
+        B3[Household Count]
     end
 
-    subgraph DEMAND["3. DEMAND ESTIMATION"]
-        C1[Residential<br/>households × tier_kWh × uptake]
-        C2[Commercial<br/>SME count × 600 kWh]
-        C3[Agricultural<br/>mills + irrigation + dryers]
-        C4[Public<br/>health + education facilities]
-        C5[Growth 2025→2040<br/>pop 2.7% + wealth 1.5%]
+    subgraph DEMAND["DEMAND ESTIMATION"]
+        C1[Residential]
+        C2[Commercial]
+        C3[Agricultural]
+        C4[Public Services]
+        C5[Growth Projection]
     end
 
-    subgraph COST["4. LCOE CALCULATION"]
-        D1[Grid<br/>MV distance + LV + transformers<br/>+ connections + energy cost]
-        D2[Mini-Grid<br/>PV sizing + battery + inverter<br/>+ replacements Y7,Y14]
-        D3[SHS<br/>unit cost by tier<br/>excluded if productive loads]
+    subgraph COST["TECHNOLOGY COSTING"]
+        D1[Grid Extension]
+        D2[Mini-Grid]
+        D3[Solar Home Systems]
     end
 
-    subgraph SELECT["5. OPTIMIZATION"]
-        E1[LCOE comparison<br/>Grid vs Mini-Grid vs SHS]
-        E2[Select minimum<br/>per settlement]
+    subgraph SELECT["OPTIMIZATION"]
+        E1[LCOE Comparison]
+        E2[Least-Cost Selection]
     end
 
-    subgraph OUTPUT["6. OUTPUT"]
-        F[results.geojson<br/>optimal_tech + investment<br/>per settlement]
+    subgraph OUTPUT["OUTPUT"]
+        F[Technology & Investment<br/>per Settlement]
     end
 
     A --> B1 --> B2 --> B3
@@ -65,6 +65,12 @@ flowchart TB
     style SELECT fill:#fce4ec
     style OUTPUT fill:#e0f2f1
 ```
+
+**Approach:**
+1. **Classification** - Categorize settlements by urbanization level and energy access tier using demographic and wealth indicators
+2. **Demand** - Estimate sectoral electricity demand (residential, productive, public) and project growth over planning horizon
+3. **Costing** - Calculate Levelized Cost of Electricity (LCOE) for each technology option based on infrastructure distances and load characteristics
+4. **Optimization** - Select least-cost technology per settlement considering technical constraints
 
 ## Data
 
