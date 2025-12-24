@@ -1,16 +1,33 @@
 # Settlement-Level Least-Cost Electrification (Benin, 2025-2040)
 
-Least-cost electrification model for 17,205 settlements in Benin. Compares Grid Extension, Mini-Grid, and Solar Home Systems (SHS) using levelized cost of electricity (LCOE).
+Least-cost electrification model for 17,205 settlements in Benin. Compares Grid Extension, Mini-Grid (solar PV + battery), and Solar Home Systems (SHS) using levelized cost of electricity (LCOE). The model implements the ESMAP Multi-Tier Framework for demand estimation and performs techno-economic optimization at the settlement level.
 
 ## Results
 
 | Metric | Value |
 |--------|-------|
 | Settlements | 17,205 |
+| Population | 14,111,192 |
 | Grid | 1,523 (9%) |
 | Mini-Grid | 7,552 (44%) |
 | SHS | 8,130 (47%) |
 | Total Investment | USD 2.26B |
+| Projected Demand (2040) | 2,694 GWh/year |
+
+## Key Findings
+
+| Technology | Settlements | Population | Demand (GWh) | Investment | Per Capita | Avg LCOE |
+|------------|-------------|------------|--------------|------------|------------|----------|
+| Grid | 1,523 (9%) | 11.5M (81%) | 2,532 (94%) | $1.58B (70%) | $137 | $0.38/kWh |
+| Mini-Grid | 7,552 (44%) | 2.1M (15%) | 147 (5%) | $0.67B (30%) | $317 | $0.80/kWh |
+| SHS | 8,130 (47%) | 0.5M (4%) | 14 (1%) | $0.01B (0%) | $26 | $0.63/kWh |
+
+**Implications:**
+- Grid extension serves the minority of settlements (9%) but captures 81% of population and 94% of demand
+- Decentralized solutions (Mini-Grid + SHS) dominate settlement count (91%) but serve only 19% of population
+- Grid LCOE is lowest ($0.38/kWh) due to economies of scale, despite higher per-capita investment ($137)
+- Mini-Grids serve medium-sized settlements with higher per-capita costs ($317) but moderate LCOE ($0.80/kWh)
+- SHS serves smallest settlements with lowest per-capita cost ($26) but limited capacity (35-350 kWh/year/household)
 
 ## Method
 
@@ -325,7 +342,15 @@ python run_model.py --input data/settlements.geojson --output results.geojson
 
 ### Notebook
 
-Open `notebooks/electrification_analysis.ipynb` for step-by-step execution with visualizations.
+`notebooks/electrification_analysis.ipynb` provides comprehensive analysis with:
+
+1. **Spatial Distribution Map**: Geographic visualization of technology selection across Benin
+2. **Economic Analysis**: Investment allocation, LCOE distributions, technology-specific cost breakdowns
+3. **Demand Characteristics**: Population vs demand patterns, per-capita consumption, sectoral breakdown
+4. **Technology Competitiveness**: Analysis of grid distance thresholds, demand-distance relationships
+5. **Statistical Insights**: Summary tables quantifying settlement characteristics, investment efficiency, and technology trade-offs
+
+The notebook generates publication-ready figures and quantitative insights suitable for technical reports.
 
 ### Programmatic usage
 
