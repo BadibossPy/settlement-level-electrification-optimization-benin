@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badre Abderrahmane Alloul – GeoAI & Hydrology Engineer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafafa;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --accent: #0066cc;
+            --border: #ddd;
+            --card-bg: #fff;
+            --code-bg: #f5f5f5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 80px 0 60px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .title {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .statement {
+            font-size: 1.15rem;
+            margin-bottom: 32px;
+            max-width: 800px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 24px;
+        }
+
+        .hero-list h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .hero-list ul {
+            list-style: none;
+        }
+
+        .hero-list li {
+            padding: 6px 0;
+            font-size: 0.95rem;
+        }
+
+        .hero-list li:before {
+            content: "–";
+            margin-right: 8px;
+            color: var(--accent);
+        }
+
+        section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .section-intro {
+            font-size: 0.98rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            max-width: 800px;
+            line-height: 1.65;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 24px;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .card p {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: var(--code-bg);
+            color: var(--text);
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .viz-grid {
+            display: grid;
+            gap: 40px;
+            margin-top: 32px;
+        }
+
+        .viz-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
+
+        .viz-item h3 {
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .viz-canvas {
+            width: 100%;
+            height: 320px;
+            margin-bottom: 12px;
+        }
+
+        .viz-caption {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .tech-group h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .tech-group ul {
+            list-style: none;
+        }
+
+        .tech-group li {
+            padding: 4px 0;
+            font-size: 0.92rem;
+        }
+
+        footer {
+            padding: 60px 0 80px;
+            text-align: center;
+        }
+
+        .cta {
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .contact-links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: opacity 0.2s ease;
+        }
+
+        .contact-links a:hover {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 60px 0 40px;
+            }
+
+            section {
+                padding: 40px 0;
+            }
+
+            .viz-canvas {
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Badre Abderrahmane Alloul</h1>
+            <div class="title">GeoAI & Hydrology Engineer – Geospatial Data, Remote Sensing, and GeoSaaS</div>
+            <p class="statement">I build production-grade geospatial and GeoAI systems for water, climate, and infrastructure.</p>
+            
+            <div class="hero-grid">
+                <div class="hero-list">
+                    <h3>Core Domains</h3>
+                    <ul>
+                        <li>GeoAI</li>
+                        <li>Hydrology & Flood Risk</li>
+                        <li>Remote Sensing</li>
+                        <li>Energy & Electrification</li>
+                        <li>GeoSaaS Platforms</li>
+                    </ul>
+                </div>
+                <div class="hero-list">
+                    <h3>Key Capabilities</h3>
+                    <ul>
+                        <li>Data engineering</li>
+                        <li>Spatial modelling</li>
+                        <li>API design</li>
+                        <li>QGIS plugin development</li>
+                        <li>Interactive visualization</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="geoai-water">
+            <h2>GeoAI & Water Systems</h2>
+            <p class="section-intro">
+                Work on flood risk assessment, climate data processing (NetCDF, GRIB), hydrology modelling, and Sentinel-based analysis. 
+                Focus on building scalable pipelines that process multi-temporal satellite imagery and climate reanalysis data for operational forecasting and risk mapping.
+            </p>
+            
+            <div class="cards">
+                <div class="card">
+                    <h3>Flood Risk Multi-Hazard Platform</h3>
+                    <p>Integrated system combining ERA5 precipitation, DEM-derived flow accumulation, and Sentinel-1 flood extent mapping. Real-time risk scoring per basin.</p>
+                    <div class="tags">
+                        <span class="tag">xarray</span>
+                        <span class="tag">Dask</span>
+                        <span class="tag">Sentinel-1</span>
+                        <span class="tag">PostGIS</span>
+                        <span class="tag">FastAPI</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Hydropower Production Forecasting</h3>
+                    <p>Time-series model predicting reservoir inflow and optimizing turbine dispatch. Ingests ERA5, CHIRPS, and gauge data through automated ETL.</p>
+                    <div class="tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">NetCDF</span>
+                        <span class="tag">scikit-learn</span>
+                        <span class="tag">PostgreSQL</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Climate Data Processing Pipeline</h3>
+                    <p>Scalable system for bias correction and downscaling of CMIP6 and ERA5 datasets. Produces STAC-indexed COGs for web access.</p>
+                    <div class="tags">
+                        <span class="tag">GDAL</span>
+                        <span class="tag">Rasterio</span>
+                        <span class="tag">GRIB</span>
+                        <span class="tag">STAC</span>
+                        <span class="tag">S3</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="geospatial-engineering">
+            <h2>Geospatial Engineering & GeoSaaS</h2>
+            <p class="section-intro">
+                Building APIs, PostGIS databases, STAC catalogs, COG pipelines, and interactive dashboards. 
+                Focus on infrastructure that supports scalable geospatial analytics, from data ingestion to delivery.
+            </p>
+            
+            <div class="cards">
+                <div class="card">
+                    <h3>Flood Risk Data Lake</h3>
+                    <p>Cloud-native architecture for historical flood event cataloging. Vector tiles for web mapping, automated raster analysis via Lambda functions.</p>
+                    <div class="tags">
+                        <span class="tag">AWS S3</span>
+                        <span class="tag">Lambda</span>
+                        <span class="tag">PostGIS</span>
+                        <span class="tag">MVT</span>
+                        <span class="tag">Docker</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Hydropower GeoSaaS Toolkit</h3>
+                    <p>REST API and QGIS plugin for reservoir site selection. Combines DEM analysis, hydrological routing, and infrastructure distance calculations.</p>
+                    <div class="tags">
+                        <span class="tag">FastAPI</span>
+                        <span class="tag">PyQGIS</span>
+                        <span class="tag">GeoPandas</span>
+                        <span class="tag">Shapely</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Settlement Electrification Optimization – Benin 2040</h3>
+                    <p>Least-cost technology selection for 17,000+ settlements. Multi-tier demand model, LCOE comparison across grid extension, mini-grid, and SHS.</p>
+                    <div class="tags">
+                        <span class="tag">GeoPandas</span>
+                        <span class="tag">NumPy</span>
+                        <span class="tag">optimization</span>
+                        <span class="tag">GeoJSON</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="visual-analytics">
+            <h2>Selected Visual Analytics</h2>
+            
+            <div class="viz-grid">
+                <div class="viz-item">
+                    <h3>Hydropower Production vs Inflow</h3>
+                    <canvas id="timeSeriesChart" class="viz-canvas"></canvas>
+                    <p class="viz-caption">Monthly reservoir inflow (m³/s) and corresponding hydropower production (GWh) showing seasonal variability and production efficiency across the annual cycle.</p>
+                </div>
+
+                <div class="viz-item">
+                    <h3>Electrification LCOE Distribution</h3>
+                    <canvas id="histogramChart" class="viz-canvas"></canvas>
+                    <p class="viz-caption">Levelized cost of electricity (USD/kWh) distribution across 17,205 settlements in Benin. Shows technology competitiveness zones for grid, mini-grid, and solar home systems.</p>
+                </div>
+
+                <div class="viz-item">
+                    <h3>Regional Flood Risk Index</h3>
+                    <canvas id="mapChart" class="viz-canvas"></canvas>
+                    <p class="viz-caption">Synthetic regional flood hazard assessment showing risk levels derived from precipitation extremes, terrain analysis, and historical event frequency. Darker zones indicate higher risk.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-stack">
+            <h2>Tech Stack</h2>
+            
+            <div class="tech-grid">
+                <div class="tech-group">
+                    <h3>Geo & Remote Sensing</h3>
+                    <ul>
+                        <li>GeoPandas</li>
+                        <li>Rasterio</li>
+                        <li>GDAL/OGR</li>
+                        <li>xarray</li>
+                        <li>Dask</li>
+                        <li>Sentinel-1/2</li>
+                        <li>ERA5</li>
+                        <li>CHIRPS</li>
+                    </ul>
+                </div>
+
+                <div class="tech-group">
+                    <h3>Data & Platforms</h3>
+                    <ul>
+                        <li>PostgreSQL/PostGIS</li>
+                        <li>BigQuery</li>
+                        <li>AWS (S3, EC2, Lambda)</li>
+                        <li>Docker</li>
+                        <li>SLURM</li>
+                        <li>NetCDF/GRIB</li>
+                        <li>COG/STAC</li>
+                    </ul>
+                </div>
+
+                <div class="tech-group">
+                    <h3>Engineering & APIs</h3>
+                    <ul>
+                        <li>Python</li>
+                        <li>FastAPI</li>
+                        <li>REST</li>
+                        <li>CI/CD</li>
+                        <li>pytest</li>
+                        <li>NumPy/Pandas</li>
+                        <li>scikit-learn</li>
+                    </ul>
+                </div>
+
+                <div class="tech-group">
+                    <h3>GIS & Plugins</h3>
+                    <ul>
+                        <li>QGIS</li>
+                        <li>PyQGIS</li>
+                        <li>Plugin Development</li>
+                        <li>WebGIS</li>
+                        <li>Leaflet</li>
+                        <li>MapLibre GL</li>
+                        <li>Vector Tiles</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p class="cta">Let's build the next geospatial system.</p>
+            <div class="contact-links">
+                <a href="https://github.com/BadibossPy" target="_blank">GitHub</a>
+                <a href="https://linkedin.com/in/badre-alloul" target="_blank">LinkedIn</a>
+                <a href="mailto:badre.alloul@example.com">Email</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Time Series Chart: Hydropower Production vs Inflow
+        function drawTimeSeriesChart() {
+            const canvas = document.getElementById('timeSeriesChart');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const width = rect.width;
+            const height = rect.height;
+            const padding = { top: 40, right: 40, bottom: 50, left: 60 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const inflow = [850, 920, 1100, 1350, 1580, 1820, 2150, 2280, 2050, 1650, 1200, 950];
+            const production = [95, 105, 125, 145, 165, 185, 210, 220, 200, 165, 130, 105];
+
+            const maxInflow = Math.max(...inflow);
+            const maxProduction = Math.max(...production);
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, padding.top + chartHeight);
+            ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+            ctx.stroke();
+
+            // Inflow line (blue)
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < inflow.length; i++) {
+                const x = padding.left + (chartWidth / (inflow.length - 1)) * i;
+                const y = padding.top + chartHeight - (inflow[i] / maxInflow) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Production line (orange)
+            ctx.strokeStyle = '#ff6b35';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < production.length; i++) {
+                const x = padding.left + (chartWidth / (production.length - 1)) * i;
+                const y = padding.top + chartHeight - (production[i] / maxProduction) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Month labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            months.forEach((month, i) => {
+                const x = padding.left + (chartWidth / (months.length - 1)) * i;
+                ctx.fillText(month, x, padding.top + chartHeight + 20);
+            });
+
+            // Y-axis labels (Inflow - left)
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#0066cc';
+            for (let i = 0; i <= 4; i++) {
+                const value = Math.round((maxInflow / 4) * (4 - i));
+                const y = padding.top + (chartHeight / 4) * i + 5;
+                ctx.fillText(value + ' m³/s', padding.left - 10, y);
+            }
+
+            // Y-axis labels (Production - right)
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#ff6b35';
+            for (let i = 0; i <= 4; i++) {
+                const value = Math.round((maxProduction / 4) * (4 - i));
+                const y = padding.top + (chartHeight / 4) * i + 5;
+                ctx.fillText(value + ' GWh', padding.left + chartWidth + 10, y);
+            }
+
+            // Legend
+            ctx.font = '13px -apple-system, sans-serif';
+            ctx.fillStyle = '#0066cc';
+            ctx.fillRect(padding.left, 15, 15, 3);
+            ctx.fillText('Inflow', padding.left + 20, 20);
+            
+            ctx.fillStyle = '#ff6b35';
+            ctx.fillRect(padding.left + 100, 15, 15, 3);
+            ctx.fillText('Production', padding.left + 120, 20);
+        }
+
+        // Histogram Chart: LCOE Distribution
+        function drawHistogramChart() {
+            const canvas = document.getElementById('histogramChart');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const width = rect.width;
+            const height = rect.height;
+            const padding = { top: 40, right: 40, bottom: 50, left: 60 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            // Synthetic LCOE distribution data
+            const bins = [
+                { range: '0.10', count: 1200, color: '#2ecc71' },
+                { range: '0.15', count: 2800, color: '#3498db' },
+                { range: '0.20', count: 4200, color: '#3498db' },
+                { range: '0.25', count: 3800, color: '#3498db' },
+                { range: '0.30', count: 2500, color: '#e67e22' },
+                { range: '0.35', count: 1600, color: '#e67e22' },
+                { range: '0.40', count: 900, color: '#e74c3c' },
+                { range: '0.45+', count: 205, color: '#e74c3c' }
+            ];
+
+            const maxCount = Math.max(...bins.map(b => b.count));
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, padding.top + chartHeight);
+            ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+            ctx.stroke();
+
+            // Bars
+            const barWidth = chartWidth / bins.length - 4;
+            bins.forEach((bin, i) => {
+                const x = padding.left + (chartWidth / bins.length) * i + 2;
+                const barHeight = (bin.count / maxCount) * chartHeight;
+                const y = padding.top + chartHeight - barHeight;
+                
+                ctx.fillStyle = bin.color;
+                ctx.fillRect(x, y, barWidth, barHeight);
+            });
+
+            // X-axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            bins.forEach((bin, i) => {
+                const x = padding.left + (chartWidth / bins.length) * i + (chartWidth / bins.length) / 2;
+                ctx.fillText(bin.range, x, padding.top + chartHeight + 20);
+            });
+
+            // Y-axis labels
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#666';
+            for (let i = 0; i <= 4; i++) {
+                const value = Math.round((maxCount / 4) * (4 - i) / 100) * 100;
+                const y = padding.top + (chartHeight / 4) * i + 5;
+                ctx.fillText(value.toLocaleString(), padding.left - 10, y);
+            }
+
+            // Axis labels
+            ctx.save();
+            ctx.translate(15, padding.top + chartHeight / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#333';
+            ctx.font = '13px -apple-system, sans-serif';
+            ctx.fillText('Settlement Count', 0, 0);
+            ctx.restore();
+
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.fillText('LCOE (USD/kWh)', padding.left + chartWidth / 2, height - 10);
+
+            // Legend
+            ctx.font = '12px -apple-system, sans-serif';
+            ctx.textAlign = 'left';
+            const legendItems = [
+                { label: 'Grid', color: '#2ecc71', x: 0 },
+                { label: 'Mini-Grid', color: '#3498db', x: 80 },
+                { label: 'SHS', color: '#e74c3c', x: 180 }
+            ];
+            legendItems.forEach(item => {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(padding.left + item.x, 15, 12, 12);
+                ctx.fillStyle = '#333';
+                ctx.fillText(item.label, padding.left + item.x + 18, 25);
+            });
+        }
+
+        // Map Chart: Regional Flood Risk
+        function drawMapChart() {
+            const canvas = document.getElementById('mapChart');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const width = rect.width;
+            const height = rect.height;
+            const padding = 30;
+
+            // Synthetic regional grid data
+            const gridSize = 12;
+            const cellWidth = (width - padding * 2) / gridSize;
+            const cellHeight = (height - padding * 2) / gridSize;
+
+            // Generate risk values (0-1) with some spatial autocorrelation
+            const riskData = [];
+            for (let i = 0; i < gridSize; i++) {
+                riskData[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const base = Math.random();
+                    const spatial = Math.sin(i * 0.5) * Math.cos(j * 0.4) * 0.3;
+                    const cluster = (i > 5 && i < 9 && j > 3 && j < 8) ? 0.4 : 0;
+                    riskData[i][j] = Math.min(1, Math.max(0, base * 0.5 + spatial + cluster));
+                }
+            }
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw grid cells
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const x = padding + i * cellWidth;
+                    const y = padding + j * cellHeight;
+                    const risk = riskData[i][j];
+                    
+                    // Color from light yellow to dark red based on risk
+                    const r = Math.round(255);
+                    const g = Math.round(255 - risk * 180);
+                    const b = Math.round(255 - risk * 230);
+                    
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    ctx.fillRect(x, y, cellWidth - 1, cellHeight - 1);
+                }
+            }
+
+            // Border
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(padding, padding, width - padding * 2, height - padding * 2);
+
+            // Legend
+            const legendWidth = 200;
+            const legendHeight = 20;
+            const legendX = width - legendWidth - padding;
+            const legendY = padding - 25;
+
+            const gradient = ctx.createLinearGradient(legendX, legendY, legendX + legendWidth, legendY);
+            gradient.addColorStop(0, 'rgb(255, 255, 255)');
+            gradient.addColorStop(0.33, 'rgb(255, 200, 100)');
+            gradient.addColorStop(0.66, 'rgb(255, 120, 50)');
+            gradient.addColorStop(1, 'rgb(255, 75, 25)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
+
+            ctx.fillStyle = '#333';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Low Risk', legendX, legendY - 5);
+            ctx.textAlign = 'right';
+            ctx.fillText('High Risk', legendX + legendWidth, legendY - 5);
+
+            // Compass
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('N', padding + 15, padding + 15);
+            ctx.beginPath();
+            ctx.moveTo(padding + 15, padding + 20);
+            ctx.lineTo(padding + 15, padding + 35);
+            ctx.moveTo(padding + 15, padding + 35);
+            ctx.lineTo(padding + 12, padding + 30);
+            ctx.moveTo(padding + 15, padding + 35);
+            ctx.lineTo(padding + 18, padding + 30);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        // Initialize all charts on load
+        window.addEventListener('load', () => {
+            drawTimeSeriesChart();
+            drawHistogramChart();
+            drawMapChart();
+        });
+
+        // Redraw on resize
+        window.addEventListener('resize', () => {
+            drawTimeSeriesChart();
+            drawHistogramChart();
+            drawMapChart();
+        });
+    </script>
+</body>
+</html>
